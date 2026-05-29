@@ -107,7 +107,7 @@ export default function TutorSession({
   const [fatalError, setFatalError] = useState<string | null>(null);
 
   // Per-card answering state (mirrors the linear study mode).
-  const [mode, setMode] = useState<Mode>("self");
+  const [mode, setMode] = useState<Mode>("short");
   const [revealed, setRevealed] = useState(false);
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<Result | null>(null);
@@ -134,7 +134,7 @@ export default function TutorSession({
   const questionRef = useRef<HTMLDivElement>(null);
 
   function resetCardState() {
-    setMode("self");
+    setMode("short");
     setRevealed(false);
     setAnswer("");
     setResult(null);
@@ -480,7 +480,7 @@ export default function TutorSession({
                 submitAnswer();
               }
             }}
-            rows={4}
+            rows={8}
             placeholder="Type your answer…"
             aria-label="Your answer"
           />

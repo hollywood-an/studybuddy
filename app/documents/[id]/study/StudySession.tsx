@@ -23,7 +23,7 @@ export default function StudySession({
   backHref: string;
 }) {
   const [index, setIndex] = useState(0);
-  const [mode, setMode] = useState<Mode>("self");
+  const [mode, setMode] = useState<Mode>("short");
   const [revealed, setRevealed] = useState(false);
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<Result | null>(null);
@@ -102,7 +102,7 @@ export default function StudySession({
 
   function restart() {
     setIndex(0);
-    setMode("self");
+    setMode("short");
     setCorrectCount(0);
     setFinished(false);
     resetCardState();
@@ -187,7 +187,7 @@ export default function StudySession({
           <Textarea
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            rows={4}
+            rows={8}
             placeholder="Type your answer…"
             aria-label="Your answer"
           />

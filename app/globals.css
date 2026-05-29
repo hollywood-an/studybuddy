@@ -136,3 +136,49 @@ body {
     animation: none;
   }
 }
+
+/*
+  Landing hero: one orchestrated entrance, staggered via --reveal-i. The resting
+  state is the visible default — the keyframe only introduces it — so reduced
+  motion, no-JS, and headless renders all show the full hero.
+*/
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+.hero-reveal {
+  animation: hero-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--reveal-i, 0) * 80ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-reveal {
+    animation: none;
+  }
+}
+
+/*
+  The agent's sparkle mark, gently breathing so the demo reads as "thinking,"
+  not a static screenshot. Resting opacity is full, so reduced motion shows a
+  normal, visible mark.
+*/
+@keyframes agent-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+.agent-pulse {
+  animation: agent-pulse 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .agent-pulse {
+    animation: none;
+  }
+}

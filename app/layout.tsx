@@ -13,10 +13,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Display serif, used only for large headings.
+// Display serif, used only for large headings. Italic is loaded for the
+// expressive emphasis in the landing headline.
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
