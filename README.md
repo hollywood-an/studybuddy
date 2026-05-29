@@ -2,7 +2,7 @@
 
 An AI study tutor that turns your notes into flashcards and runs the session with an agent that picks each card, explains why, and writes you a study plan when you're done.
 
-**Live demo:** [paste your Vercel URL]
+**Live demo:** : https://studybuddy-henna.vercel.app/
 **Try it:** upload a PDF (or slides / Word / plain text), wait for the cards to generate, then open **Tutor mode** on the document.
 
 ---
