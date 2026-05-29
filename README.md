@@ -26,11 +26,12 @@ The point isn't that an LLM picks cards. It's that the agent **shows its reasoni
 
 Replace these with real captures:
 
-- **Landing** — `./docs/screenshots/home.png`
-- **Tutor mode, mid-session** (the "Why this card" rationale above the flashcard) — `./docs/screenshots/tutor-reasoning.png`
-- **End-of-session study plan** — `./docs/screenshots/study-plan.png`
+- **Landing** — <img width="1499" height="1367" alt="image" src="https://github.com/user-attachments/assets/b78b7168-9661-451f-b33f-8c7e640214f5" />
 
-A short GIF of one card-to-next-card cycle (reasoning → card → answer → next reasoning) lands harder than a static shot.
+- **Tutor mode, mid-session** (the "Why this card" rationale above the flashcard) — <img width="852" height="684" alt="image" src="https://github.com/user-attachments/assets/de882765-4555-4af6-9921-d68aaa80518b" />
+
+- **End-of-session study plan** — <img width="915" height="1260" alt="image" src="https://github.com/user-attachments/assets/60725d68-c33f-4c9f-8c35-d33ea2b04091" />
+
 
 ---
 
