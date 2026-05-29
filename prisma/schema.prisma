@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  title     String
+  filename  String?
+  createdAt DateTime @default(now())
+  chunks    Chunk[]
+  flashcards Flashcard[]
+  sessions   TutorSession[]
+}
+
+model Chunk {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content    String   @db.Text
+  index      Int
+  createdAt  DateTime @default(now())
+  flashcards  Flashcard[]
+
+  @@index([documentId])
+}
+
+model Flashcard {
+  id          String    @id @default(cuid())
+  documentId  String
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkId     String
+  chunk       Chunk     @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  question    String    @db.Text
+  answer      String    @db.Text
+  mastery     Float     @default(0)
+  timesSeen   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  attempts    Attempt[]
+
+  @@index([documentId])
+}
+
+model Attempt {
+  id          String    @id @default(cuid())
+  flashcardId String
+  flashcard   Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  userAnswer  String?   @db.Text     // null for self-rated, set for short-answer
+  isCorrect   Boolean
+  feedback    String?   @db.Text     // Claude's feedback for short-answer mode
+  createdAt   DateTime  @default(now())
+
+  @@index([flashcardId])
+}
+
+model TutorSession {
+  id          String   @id @default(cuid())
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  studyPlan   String?  @db.Text     // markdown plan written by the agent at session end
+  transcript  Json     @default("[]")  // the full agent conversation history for debugging
+
+  @@index([documentId])
+}

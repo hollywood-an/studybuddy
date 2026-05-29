@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-28T23:40:00Z",
+  "title": "Design System: StudyBuddy",
+  "extensions": {
+    "colorMeta": {
+      "burnt-amber": {
+        "role": "primary",
+        "displayName": "Burnt Amber",
+        "canonical": "#b45309",
+        "tonalRamp": ["#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fcd34d", "#fef3c7"]
+      },
+      "warm-off-white": {
+        "role": "neutral",
+        "displayName": "Warm Off-White",
+        "canonical": "#faf9f7",
+        "tonalRamp": ["#1c1917", "#44403c", "#57534e", "#78716c", "#a8a29e", "#d6d3d1", "#e7e5e4", "#faf9f7"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1c1917",
+        "tonalRamp": ["#1c1917", "#292524", "#44403c", "#57534e", "#78716c", "#a8a29e", "#d6d3d1", "#f5f5f4"]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#78716c",
+        "tonalRamp": ["#1c1917", "#44403c", "#57534e", "#78716c", "#a8a29e", "#d6d3d1", "#e7e5e4", "#f5f5f4"]
+      },
+      "success-green": {
+        "role": "tertiary",
+        "displayName": "Success Green",
+        "canonical": "#047857",
+        "tonalRamp": ["#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#a7f3d0", "#ecfdf5"]
+      },
+      "destructive-red": {
+        "role": "tertiary",
+        "displayName": "Destructive Red",
+        "canonical": "#b91c1c",
+        "tonalRamp": ["#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fecaca", "#fef2f2"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Fraunces serif. Page heroes and the top of primary screens. Ceiling 3rem; never shouts." },
+      "headline": { "displayName": "Headline", "purpose": "Fraunces serif. Section headings and feature titles." },
+      "title": { "displayName": "Title", "purpose": "Geist sans, semibold. In-card titles and the flashcard question." },
+      "body": { "displayName": "Body", "purpose": "Geist sans. Reading copy, tutor prose, study-plan markdown. 65-75ch, line-height 1.6." },
+      "label": { "displayName": "Label", "purpose": "Geist sans, uppercase microlabels (<=4 words): QUESTION, YOUR STUDY PLAN." },
+      "mono": { "displayName": "Mono", "purpose": "Geist Mono. Inline code in model-authored markdown only." }
+    },
+    "shadows": [
+      { "name": "resting-card", "value": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)", "purpose": "The only standing shadow. Lifts cards a hair off the warm canvas. Do not deepen on hover." }
+    ],
+    "motion": [
+      { "name": "transition-colors", "value": "150ms", "purpose": "Color state transitions on buttons, links, inputs, and toggles." },
+      { "name": "spin", "value": "1s linear infinite", "purpose": "Loading spinner during grading and tutor turns." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one main action per view. Burnt Amber fill, white text.",
+      "html": "<button class=\"ds-btn-primary\">Get started</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border:none;border-radius:8px;background:#b45309;color:#fff;font:500 14px/1 Geist,ui-sans-serif,system-ui,sans-serif;white-space:nowrap;cursor:pointer;transition:background .15s}.ds-btn-primary:hover{background:#92400e}.ds-btn-primary:focus-visible{outline:2px solid #b45309;outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "The lower-priority sibling action. White fill, hairline border.",
+      "html": "<button class=\"ds-btn-secondary\">Upload a document</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border:1px solid #e7e5e4;border-radius:8px;background:#fff;color:#1c1917;font:500 14px/1 Geist,ui-sans-serif,system-ui,sans-serif;white-space:nowrap;cursor:pointer;transition:background .15s}.ds-btn-secondary:hover{background:#f5f5f4}.ds-btn-secondary:focus-visible{outline:2px solid #b45309;outline-offset:2px}"
+    },
+    {
+      "name": "Primary Badge",
+      "kind": "chip",
+      "refersTo": "badge-primary",
+      "description": "Signals an active/positive count, e.g. a document that has flashcards. Amber-tint pill.",
+      "html": "<span class=\"ds-badge-primary\">12 flashcards</span>",
+      "css": ".ds-badge-primary{display:inline-flex;align-items:center;border-radius:9999px;padding:2px 10px;background:#f8eee6;color:#b45309;font:500 12px/1.4 Geist,ui-sans-serif,system-ui,sans-serif}"
+    },
+    {
+      "name": "Neutral Badge",
+      "kind": "chip",
+      "refersTo": "badge-neutral",
+      "description": "Inert metadata count. Muted-stone pill. (Darken text to clear AA 4.5:1.)",
+      "html": "<span class=\"ds-badge-neutral\">8 sections</span>",
+      "css": ".ds-badge-neutral{display:inline-flex;align-items:center;border-radius:9999px;padding:2px 10px;background:#f5f5f4;color:#57534e;font:500 12px/1.4 Geist,ui-sans-serif,system-ui,sans-serif}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Raised reading surface. White on the warm canvas, hairline border, whisper-light shadow.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">What is the powerhouse of the cell?</div></div>",
+      "css": ".ds-card{border:1px solid #e7e5e4;border-radius:12px;background:#fff;color:#1c1917;box-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1),0 1px 2px -1px rgb(0 0 0 / 0.1);padding:20px}.ds-card-title{font:600 16px/1.4 Geist,ui-sans-serif,system-ui,sans-serif}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "White field, input-stone stroke, amber focus ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"Type your answer…\" aria-label=\"Your answer\">",
+      "css": ".ds-input{box-sizing:border-box;height:40px;width:100%;border:1px solid #d6d3d1;border-radius:8px;background:#fff;color:#1c1917;padding:0 12px;font:400 14px Geist,ui-sans-serif,system-ui,sans-serif}.ds-input::placeholder{color:#78716c}.ds-input:focus-visible{outline:2px solid #b45309;outline-offset:2px}"
+    },
+    {
+      "name": "Mode Toggle",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Signature binary switch. Segmented control; active segment is an amber fill. Used for Self-rate vs Short answer.",
+      "html": "<div class=\"ds-toggle\"><button class=\"ds-toggle-item ds-toggle-item--active\">Self-rate</button><button class=\"ds-toggle-item\">Short answer</button></div>",
+      "css": ".ds-toggle{display:inline-flex;gap:0;border:1px solid #e7e5e4;border-radius:8px;background:#fff;padding:2px}.ds-toggle-item{border:none;background:none;border-radius:6px;padding:4px 12px;font:500 14px Geist,ui-sans-serif,system-ui,sans-serif;color:#78716c;cursor:pointer;transition:color .15s,background .15s}.ds-toggle-item:hover{color:#1c1917}.ds-toggle-item--active{background:#b45309;color:#fff}.ds-toggle-item:focus-visible{outline:2px solid #b45309;outline-offset:2px}"
+    },
+    {
+      "name": "Agent Reasoning Callout",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The brand-defining element. Shows the tutor's 'why this card' rationale above the flashcard, with the Burnt Amber sparkle mark. This is how StudyBuddy shows the agent thinking.",
+      "html": "<div class=\"ds-reasoning\"><svg class=\"ds-reasoning-mark\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2.5l2.1 6.2a3 3 0 0 0 1.9 1.9l6.2 2.1-6.2 2.1a3 3 0 0 0-1.9 1.9L12 22.8l-2.1-6.1a3 3 0 0 0-1.9-1.9L1.8 12.7l6.2-2.1a3 3 0 0 0 1.9-1.9z\"/></svg><p class=\"ds-reasoning-text\"><span class=\"ds-reasoning-lead\">Why this card</span>This is your lowest-mastery card, so let's lock it in before moving on.</p></div>",
+      "css": ".ds-reasoning{display:flex;gap:12px;align-items:flex-start;border:1px solid #e7e5e4;border-radius:8px;background:rgba(245,245,244,.6);padding:16px}.ds-reasoning-mark{width:16px;height:16px;flex:none;margin-top:2px;color:#b45309}.ds-reasoning-text{margin:0;font:italic 400 14px/1.6 Geist,ui-sans-serif,system-ui,sans-serif;color:#78716c}.ds-reasoning-lead{font-style:normal;font-weight:500;color:#1c1917;margin-right:6px}"
+    },
+    {
+      "name": "Result Feedback",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Answer verdict box. Emerald-subtle for correct, red-subtle for incorrect; meaning carried by fill plus the title word, not color alone.",
+      "html": "<div class=\"ds-result\"><div class=\"ds-result-title\">Correct</div><div class=\"ds-result-body\">Right idea. Mitochondria are the cell's energy plant; the concept is what counts.</div></div>",
+      "css": ".ds-result{border-radius:8px;padding:12px 16px;background:#ecfdf5;color:#047857;font:400 14px/1.6 Geist,ui-sans-serif,system-ui,sans-serif}.ds-result-title{font-weight:500}.ds-result-body{margin-top:4px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Patient Tutor",
+    "overview": "StudyBuddy looks and behaves like a knowledgeable person who is on the student's side: warm, attentive, and never rushed, but exact about what matters. The surface is a warm off-white (#faf9f7) lit by a single burnt-amber accent (#b45309), the way a study lamp warms a desk. Type pairs a humanist serif (Fraunces) for headings with a clean sans (Geist) for everything a student reads and acts on. The discipline underneath the warmth is borrowed from Linear: tight geometry, a small and rigorously reused component set, fast state feedback, visible focus on every control. Warmth is carried by color, serif headings, and supportive copy; precision is carried by the layout grid, the 8px-family radii, and the restraint of a single accent. A tutor who is kind and rigorous.",
+    "keyCharacteristics": [
+      "Warm off-white canvas, white cards, a single burnt-amber accent used sparingly.",
+      "Serif display (Fraunces) over sans body (Geist); one mono (Geist Mono) for code.",
+      "Flat surfaces with tonal layering; shadows stay whisper-light.",
+      "8px-family radii (8 / 12px), generous padding, a max-w-3xl reading column.",
+      "Visible amber focus ring on every interactive element.",
+      "State communicated through warm/cool subtle fills (amber, emerald, red), never color alone."
+    ],
+    "rules": [
+      { "name": "The One Lamp Rule", "body": "Burnt Amber is the only accent and appears on a small fraction of any screen: the primary action, the current selection, the focus ring, the agent's mark. Its rarity is what makes it read as the important thing. Never use amber as a decorative fill or to color body text.", "section": "colors" },
+      { "name": "The Warmth-Lives-In-The-Canvas Rule", "body": "Warmth comes from the off-white background and serif headings, not from tinting every surface. Do not push neutrals further toward beige to feel warmer; #faf9f7 is the warm note, white cards are the contrast against it.", "section": "colors" },
+      { "name": "The Serif-For-Voice Rule", "body": "Fraunces is reserved for headings and moments where the product speaks in its own voice. Never set buttons, inputs, data, or body copy in the serif; that is Geist's job.", "section": "typography" },
+      { "name": "The Reading-Comfort Rule", "body": "Tutor prose and long answers cap at a 65-75ch measure with line-height 1.6. Never shrink answer or feedback text for density; legibility outranks compactness in a study tool.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. The only shadow is the resting card lift. Hover changes the border (toward amber) or the background (toward muted), not the shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep Burnt Amber (#b45309) rare: the primary action, the current selection, the focus ring, the agent mark. One lamp per room.",
+      "Do carry warmth in the off-white canvas (#faf9f7) and serif headings, not by tinting every surface beige.",
+      "Do set headings in Fraunces and everything actionable or readable in Geist.",
+      "Do give every interactive element the 2px amber focus-visible ring; it is the system's accessibility backbone.",
+      "Do convey state with both a subtle fill and text/icon (amber, emerald, red), so meaning never rests on color alone.",
+      "Do make the agent's reasoning visible via the Agent Reasoning Callout; structure the tutor's output into reasoning + card + plan.",
+      "Do keep tutor prose and long answers at a 65-75ch measure with line-height 1.6."
+    ],
+    "donts": [
+      "Don't add gamified ed-tech furniture: no mascots, streak counters, confetti, or badge-spam. Encouragement lives in copy and tone.",
+      "Don't drift toward cold corporate SaaS: no navy/blue enterprise chrome, no chart-everywhere density, no warmth-free grids.",
+      "Don't render the tutor as a sterile AI chat clone: never a gray, undifferentiated wall of transcript text.",
+      "Don't build a cluttered cram-site: no ad rails, banner noise, or competing modules; show what the current step needs.",
+      "Don't use the serif (Fraunces) for buttons, inputs, data, or body copy.",
+      "Don't reach for a deeper drop shadow on hover; shift the border or background instead.",
+      "Don't ship muted-ink text below 4.5:1 against its background; the neutral badge on muted-stone is the known offender.",
+      "Don't introduce a second accent hue or a gradient; emphasis comes from weight, size, and the one amber."
+    ]
+  }
+}
