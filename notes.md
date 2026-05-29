@@ -34,4 +34,5 @@ final: 37/40
 Ran impeccable a lot on all the files and fixed a lot of issues.
 Example: eval flagged a card-selection scenario, I traced whether my prompt change caused it, confirmed it was pre-existing model variance
 
-AI Summary of what impeccable did:
+Note 8:
+Ran impeccable for like 10 hours and fixed most of the UI stuff that was bad about the website now focusing on testing the tutor mode ai agent.
