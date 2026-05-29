@@ -39,7 +39,19 @@ export default function Home() {
   return (
     <>
       {/* Hero — the product, thinking, shown */}
-      <section className="relative overflow-hidden border-b border-border">
+      <section className="relative overflow-hidden border-b border-border bg-background bg-grain">
+        {/* Broad, faint amber lamp-glow lifting the hero off the flat canvas.
+            Weighted up/right toward the demo so it stays clear of the muted
+            subcopy in the left column (text stays AA). Decorative, behind all
+            content. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 65% at 68% 18%, color-mix(in oklch, var(--primary) 6%, transparent), transparent 72%)",
+          }}
+        />
         <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 py-20 md:py-28 lg:grid-cols-[5fr_6fr] lg:gap-16">
           {/* Copy */}
           <div className="text-center lg:text-left">
@@ -124,8 +136,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section>
+      {/* How it works — white band */}
+      <section className="bg-card bg-grain">
         <Container className="max-w-5xl">
           <div className="text-center">
             <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -164,9 +176,13 @@ export default function Home() {
               </Fragment>
             ))}
           </div>
+        </Container>
+      </section>
 
-          {/* Two ways to study — tutor leads */}
-          <h2 className="mt-16 text-center font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+      {/* Two ways to study — canvas band, tutor leads */}
+      <section className="bg-background bg-grain">
+        <Container className="max-w-5xl">
+          <h2 className="text-center font-display text-2xl font-semibold tracking-tight sm:text-3xl">
             Two ways to study
           </h2>
 
