@@ -36,6 +36,12 @@ const VERDICT_PHRASE: Record<Verdict, string> = {
   incorrect: "incorrect",
 };
 
+function nextMessage(cardId: string, verdict: Verdict, mastery: number) {
+  return `Student got card ${cardId} ${VERDICT_PHRASE[verdict]}. Mastery is now ${mastery.toFixed(
+    2
+  )}. What's next?`;
+}
+
 // The end-of-session plan is model-authored markdown. There's no typography
 // plugin in this project, so map the elements we expect to design-token classes.
 const markdownComponents: Components = {
@@ -114,6 +120,8 @@ export default function TutorSession({
   // null means "start a fresh session".
   const [lastMessage, setLastMessage] = useState<string | null>(null);
 
+  const questionRef = useRef<HTMLDivElement>(null);
+
   function resetCardState() {
     setMode("self");
     setRevealed(false);
@@ -177,35 +185,29 @@ export default function TutorSession({
   }, []);
 
   function switchMode(next: Mode) {
-    if (result) return; // can't change mode after the card is graded
+    if (result) return; // can't change mode after the card is answered
     setMode(next);
     setRevealed(false);
     setAnswer("");
     setCardError(null);
   }
 
-  function applyResult(r: Result, newMastery: number) {
-    setResult(r);
-    setMastery(newMastery);
-    setAnsweredCount((c) => c + 1);
-    if (r.verdict === "correct") setCorrectCount((c) => c + 1);
-  }
-
-  // Self-rate: record the attempt via the shared server action (two-way).
+  // Self-rate is deferred: we set the result locally so it can be changed, and
+  // only persist it (recordSelfRating) when the student advances. That keeps a
+  // misclick from permanently writing the wrong mastery signal.
   function selfRate(verdict: Verdict) {
     if (!card || busy) return;
     setCardError(null);
-    startTransition(async () => {
-      try {
-        const { newMastery } = await recordSelfRating(card.id, verdict);
-        applyResult({ verdict }, newMastery);
-      } catch {
-        setCardError("Couldn't save your rating. Try again.");
-      }
-    });
+    setResult({ verdict });
   }
 
-  // Short-answer: grade via the existing endpoint (keyed by the *card* id).
+  function changeRating() {
+    setResult(null);
+    setCardError(null);
+  }
+
+  // Short-answer: grade via the existing endpoint (keyed by the *card* id). The
+  // grade is authored server-side, so this path persists at submit time.
   async function submitAnswer() {
     if (!card || answer.trim().length === 0 || busy) return;
     setCardError(null);
@@ -220,10 +222,10 @@ export default function TutorSession({
       if (!response.ok) {
         throw new Error(data.error || "Grading failed");
       }
-      applyResult(
-        { verdict: data.verdict, feedback: data.feedback },
-        data.newMastery
-      );
+      setResult({ verdict: data.verdict, feedback: data.feedback });
+      setMastery(data.newMastery);
+      setAnsweredCount((c) => c + 1);
+      if (data.verdict === "correct") setCorrectCount((c) => c + 1);
     } catch (err) {
       setCardError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -231,21 +233,72 @@ export default function TutorSession({
     }
   }
 
-  // Tell the agent how the card went and ask for the next one. Mastery is
-  // already persisted (by the grade endpoint / server action) at this point,
-  // so the agent sees fresh state.
+  // Advance to the next card. For self-rate, commit the deferred rating now
+  // (then tell the agent); short-answer is already persisted, so just ask.
   function nextCard() {
-    if (!card || !result) return;
-    runAgent(
-      `Student got card ${card.id} ${
-        VERDICT_PHRASE[result.verdict]
-      }. Mastery is now ${mastery.toFixed(2)}. What's next?`
-    );
+    if (!card || !result || busy) return;
+    const verdict = result.verdict;
+    if (mode === "short") {
+      runAgent(nextMessage(card.id, verdict, mastery));
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const { newMastery } = await recordSelfRating(card.id, verdict);
+        setAnsweredCount((c) => c + 1);
+        if (verdict === "correct") setCorrectCount((c) => c + 1);
+        runAgent(nextMessage(card.id, verdict, newMastery));
+      } catch {
+        setCardError("Couldn't save your rating. Try again.");
+      }
+    });
   }
+
+  // Move focus to the question whenever a new card loads, so keyboard and
+  // screen-reader users land on the content instead of staying on a stale
+  // (now-unmounted) control.
+  useEffect(() => {
+    if (phase === "card") questionRef.current?.focus();
+  }, [phase, card?.id]);
+
+  // Keyboard accelerators for the answer loop. Scoped to the card phase and
+  // careful not to hijack typing or double-fire a focused button.
+  useEffect(() => {
+    if (phase !== "card") return;
+    function onKey(e: KeyboardEvent) {
+      const el = e.target as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === "TEXTAREA" || tag === "INPUT") return; // don't hijack typing
+      if (busy) return;
+      if (!result) {
+        if (mode === "self" && revealed) {
+          if (e.key === "1") {
+            e.preventDefault();
+            selfRate("correct");
+          } else if (e.key === "2") {
+            e.preventDefault();
+            selfRate("incorrect");
+          }
+        }
+      } else if (e.key === "ArrowRight" || e.key === "Enter") {
+        // Let a focused button/link handle Enter natively (avoid double-fire).
+        if (e.key === "Enter" && (tag === "BUTTON" || tag === "A")) return;
+        e.preventDefault();
+        nextCard();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // selfRate/nextCard close over this state; re-bind when it changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, mode, revealed, result, busy, mastery, card]);
 
   if (phase === "loading") {
     return (
-      <Card className="flex items-center justify-center gap-3 p-10 text-sm text-muted-foreground">
+      <Card
+        role="status"
+        className="flex items-center justify-center gap-3 p-10 text-sm text-muted-foreground"
+      >
         <SpinnerIcon className="h-4 w-4 animate-spin" />
         {sessionId ? "Choosing your next card…" : "Starting your tutor session…"}
       </Card>
@@ -255,7 +308,10 @@ export default function TutorSession({
   if (phase === "error") {
     return (
       <Card className="p-6">
-        <div className="mb-4 rounded-lg border border-destructive/20 bg-destructive-subtle px-4 py-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border border-destructive/20 bg-destructive-subtle px-4 py-3 text-sm text-destructive"
+        >
           {fatalError}
         </div>
         <div className="flex gap-3">
@@ -333,7 +389,13 @@ export default function TutorSession({
 
       {/* Question */}
       <Card className="p-5">
-        <div className="font-medium text-foreground">{card.question}</div>
+        <div
+          ref={questionRef}
+          tabIndex={-1}
+          className="font-medium text-foreground focus:outline-none"
+        >
+          {card.question}
+        </div>
 
         {mode === "self" && revealed && (
           <div className="mt-3 border-t border-border pt-3 text-muted-foreground">
@@ -375,6 +437,12 @@ export default function TutorSession({
           <Textarea
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                submitAnswer();
+              }
+            }}
             rows={4}
             placeholder="Type your answer…"
             aria-label="Your answer"
@@ -382,24 +450,48 @@ export default function TutorSession({
           <Button
             onClick={submitAnswer}
             disabled={busy || answer.trim().length === 0}
+            aria-busy={isGrading}
           >
             {isGrading ? "Grading…" : "Submit answer"}
           </Button>
+          {isGrading && (
+            <span role="status" className="sr-only">
+              Grading your answer…
+            </span>
+          )}
         </div>
       )}
 
-      {/* Result feedback */}
-      {result && <ResultBox verdict={result.verdict} feedback={result.feedback} />}
+      {/* Result feedback (announced to screen readers) */}
+      <div aria-live="polite">
+        {result && (
+          <ResultBox verdict={result.verdict} feedback={result.feedback} />
+        )}
+      </div>
 
       {/* Error */}
       {cardError && (
-        <div className="rounded-lg border border-destructive/20 bg-destructive-subtle px-4 py-3 text-sm text-destructive">
+        <div
+          role="alert"
+          className="rounded-lg border border-destructive/20 bg-destructive-subtle px-4 py-3 text-sm text-destructive"
+        >
           {cardError}
         </div>
       )}
 
       {/* Advance */}
-      {result && <Button onClick={nextCard}>Next card</Button>}
+      {result && (
+        <div className="flex gap-3">
+          <Button onClick={nextCard} disabled={busy}>
+            Next card
+          </Button>
+          {mode === "self" && (
+            <Button variant="secondary" onClick={changeRating} disabled={busy}>
+              Change rating
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
