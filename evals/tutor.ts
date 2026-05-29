@@ -213,6 +213,16 @@ const SCENARIOS: Scenario[] = [
     expected: "pick any card (no preference signal)",
     check: expectCardOneOf([0, 1, 2]),
   },
+  {
+    name: "explicit end request",
+    seedCards: [
+      { question: "What is a vector?", answer: "A quantity with magnitude and direction.", mastery: 0.2, timesSeen: 2 },
+      { question: "What is a scalar?", answer: "A quantity with magnitude only.", mastery: 0.3, timesSeen: 2 },
+    ],
+    expected: "honor the student's request to stop, even with low mastery",
+    userMessage: "I want to stop the session now.",
+    check: expectEnd,
+  },
 ];
 
 // --- runner -------------------------------------------------------------

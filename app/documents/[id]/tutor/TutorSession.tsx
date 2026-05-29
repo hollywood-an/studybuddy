@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { ResultBox } from "@/components/ui/ResultBox";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { CheckIcon, SparkleIcon, SpinnerIcon } from "@/components/ui/icons";
 // Reuse the exact server action the linear study mode uses to record a
 // self-rated attempt and bump mastery.
@@ -41,6 +42,11 @@ function nextMessage(cardId: string, verdict: Verdict, mastery: number) {
     2
   )}. What's next?`;
 }
+
+// Sent when the student ends on demand; the agent honors this and writes a plan
+// from current mastery (see the tutor system prompt).
+const END_REQUEST_MESSAGE =
+  "The student chose to end the session now. Write their study plan based on their current mastery.";
 
 // The end-of-session plan is model-authored markdown. There's no typography
 // plugin in this project, so map the elements we expect to design-token classes.
@@ -112,6 +118,11 @@ export default function TutorSession({
   const [answeredCount, setAnsweredCount] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
 
+  // End-on-demand: confirm dialog + a flag so the loading screen reads
+  // "Writing your study plan…" instead of "Choosing your next card…".
+  const [endDialogOpen, setEndDialogOpen] = useState(false);
+  const [endingSession, setEndingSession] = useState(false);
+
   const [isPending, startTransition] = useTransition();
   const [isGrading, setIsGrading] = useState(false);
   const busy = isPending || isGrading;
@@ -128,6 +139,8 @@ export default function TutorSession({
     setAnswer("");
     setResult(null);
     setCardError(null);
+    setEndDialogOpen(false);
+    setEndingSession(false);
   }
 
   // Single entry point to the agent endpoint. userMessage === null starts a
@@ -254,6 +267,15 @@ export default function TutorSession({
     });
   }
 
+  // End the session on demand: the agent writes a study plan from current
+  // mastery (see END_REQUEST_MESSAGE + the tutor system prompt).
+  function endSession() {
+    if (!card || busy) return;
+    setEndDialogOpen(false);
+    setEndingSession(true);
+    runAgent(END_REQUEST_MESSAGE);
+  }
+
   // Move focus to the question whenever a new card loads, so keyboard and
   // screen-reader users land on the content instead of staying on a stale
   // (now-unmounted) control.
@@ -262,14 +284,15 @@ export default function TutorSession({
   }, [phase, card?.id]);
 
   // Keyboard accelerators for the answer loop. Scoped to the card phase and
-  // careful not to hijack typing or double-fire a focused button.
+  // careful not to hijack typing, fire under an open dialog, or double-fire a
+  // focused button.
   useEffect(() => {
     if (phase !== "card") return;
     function onKey(e: KeyboardEvent) {
+      if (endDialogOpen || busy) return;
       const el = e.target as HTMLElement | null;
       const tag = el?.tagName;
       if (tag === "TEXTAREA" || tag === "INPUT") return; // don't hijack typing
-      if (busy) return;
       if (!result) {
         if (mode === "self" && revealed) {
           if (e.key === "1") {
@@ -291,7 +314,7 @@ export default function TutorSession({
     return () => window.removeEventListener("keydown", onKey);
     // selfRate/nextCard close over this state; re-bind when it changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, mode, revealed, result, busy, mastery, card]);
+  }, [phase, mode, revealed, result, busy, mastery, card, endDialogOpen]);
 
   if (phase === "loading") {
     return (
@@ -300,7 +323,11 @@ export default function TutorSession({
         className="flex items-center justify-center gap-3 p-10 text-sm text-muted-foreground"
       >
         <SpinnerIcon className="h-4 w-4 animate-spin" />
-        {sessionId ? "Choosing your next card…" : "Starting your tutor session…"}
+        {endingSession
+          ? "Writing your study plan…"
+          : sessionId
+            ? "Choosing your next card…"
+            : "Starting your tutor session…"}
       </Card>
     );
   }
@@ -379,12 +406,22 @@ export default function TutorSession({
         </div>
       )}
 
-      {/* Progress + mode toggle */}
+      {/* Progress + end session + mode toggle */}
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm text-muted-foreground">
           {answeredCount} answered · {correctCount} correct
         </span>
-        <ModeToggle mode={mode} disabled={!!result} onChange={switchMode} />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setEndDialogOpen(true)}
+            disabled={busy}
+            className="rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            End session
+          </button>
+          <ModeToggle mode={mode} disabled={!!result} onChange={switchMode} />
+        </div>
       </div>
 
       {/* Question */}
@@ -492,6 +529,16 @@ export default function TutorSession({
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={endDialogOpen}
+        title="End session?"
+        description="We'll save your progress and write a study plan from what you've covered so far."
+        confirmLabel="End and get plan"
+        cancelLabel="Keep studying"
+        onConfirm={endSession}
+        onCancel={() => setEndDialogOpen(false)}
+      />
     </div>
   );
 }
