@@ -18,9 +18,11 @@ const variantClasses: Record<Variant, string> = {
     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
 };
 
+// `pointer-coarse:min-h-11` lifts touch targets to 44px on touch/stylus input
+// without changing the tighter resting height for mouse/trackpad users.
 const sizeClasses: Record<Size, string> = {
-  sm: "h-8 px-3 text-sm",
-  md: "h-10 px-4 text-sm",
+  sm: "h-8 px-3 text-sm pointer-coarse:min-h-11",
+  md: "h-10 px-4 text-sm pointer-coarse:min-h-11",
 };
 
 // Exported so server components can style a Next.js <Link> as a button without

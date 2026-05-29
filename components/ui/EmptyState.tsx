@@ -7,12 +7,17 @@ export function EmptyState({
   title,
   description,
   action,
+  // Defaults to h3; callers whose page heading is h1 should pass 2 so the
+  // document outline doesn't skip a level.
+  headingLevel = 3,
 }: {
   icon?: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
+  headingLevel?: 2 | 3;
 }) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center">
       {icon && (
@@ -20,7 +25,7 @@ export function EmptyState({
           {icon}
         </div>
       )}
-      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+      <Heading className="text-lg font-semibold text-foreground">{title}</Heading>
       {description && (
         <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
           {description}

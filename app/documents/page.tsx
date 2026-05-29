@@ -26,7 +26,10 @@ function formatLastStudied(date: Date | null): string {
 }
 
 function MasteryMeter({ value }: { value: number }) {
-  const pct = Math.round(value * 100);
+  // Defend against out-of-range or non-finite data so the bar can never
+  // overflow its track or emit an invalid aria-valuenow.
+  const safe = Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
+  const pct = Math.round(safe * 100);
   return (
     <div>
       <div className="flex items-baseline justify-between">
@@ -47,7 +50,7 @@ function MasteryMeter({ value }: { value: number }) {
       >
         <div
           className="mastery-fill h-full rounded-full bg-primary"
-          style={{ "--mastery": value } as CSSProperties}
+          style={{ "--mastery": safe } as CSSProperties}
         />
       </div>
     </div>
@@ -62,51 +65,53 @@ function Dot() {
   );
 }
 
+type DocumentRow = {
+  id: string;
+  title: string;
+  cardCount: number;
+  masteredCount: number;
+  avgMastery: number;
+  lastStudied: Date | null;
+};
+
 export default async function DocumentsPage() {
-  const documents = await prisma.document.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      flashcards: {
-        select: {
-          mastery: true,
-          attempts: {
-            select: { createdAt: true },
-            orderBy: { createdAt: "desc" },
-            take: 1,
-          },
-        },
-      },
-      sessions: {
-        select: { startedAt: true },
-        orderBy: { startedAt: "desc" },
-        take: 1,
-      },
-    },
-  });
-
-  const docs = documents.map((doc) => {
-    const cardCount = doc.flashcards.length;
-    const masteredCount = doc.flashcards.filter(
-      (f) => f.mastery >= MASTERED_THRESHOLD
-    ).length;
-    const avgMastery =
-      cardCount === 0
-        ? 0
-        : doc.flashcards.reduce((sum, f) => sum + f.mastery, 0) / cardCount;
-
-    const activity: number[] = [];
-    for (const f of doc.flashcards) {
-      if (f.attempts[0]) activity.push(f.attempts[0].createdAt.getTime());
-    }
-    if (doc.sessions[0]) activity.push(doc.sessions[0].startedAt.getTime());
-    const lastStudied = activity.length
-      ? new Date(Math.max(...activity))
-      : null;
-
-    return { id: doc.id, title: doc.title, cardCount, masteredCount, avgMastery, lastStudied };
-  });
+  // Aggregate per document in the database rather than loading every flashcard
+  // row to count/average in JS. Done as raw SQL because Attempt has no
+  // documentId: "last studied" has to reach attempts through Flashcard, a join
+  // Prisma's groupBy can't express. Each subquery collapses to one row per
+  // document before joining, so there's no fan-out and the result is O(docs),
+  // not O(total flashcards).
+  const docs = await prisma.$queryRaw<DocumentRow[]>`
+    SELECT
+      d.id,
+      d.title,
+      COALESCE(fc.card_count, 0)                   AS "cardCount",
+      COALESCE(fc.mastered_count, 0)               AS "masteredCount",
+      COALESCE(fc.avg_mastery, 0)                  AS "avgMastery",
+      GREATEST(att.last_attempt, ses.last_session) AS "lastStudied"
+    FROM "Document" d
+    LEFT JOIN (
+      SELECT
+        "documentId",
+        COUNT(*)::int AS card_count,
+        (COUNT(*) FILTER (WHERE mastery >= ${MASTERED_THRESHOLD}))::int AS mastered_count,
+        AVG(mastery)::float8 AS avg_mastery
+      FROM "Flashcard"
+      GROUP BY "documentId"
+    ) fc ON fc."documentId" = d.id
+    LEFT JOIN (
+      SELECT fl."documentId", MAX(a."createdAt") AS last_attempt
+      FROM "Attempt" a
+      JOIN "Flashcard" fl ON fl.id = a."flashcardId"
+      GROUP BY fl."documentId"
+    ) att ON att."documentId" = d.id
+    LEFT JOIN (
+      SELECT "documentId", MAX("startedAt") AS last_session
+      FROM "TutorSession"
+      GROUP BY "documentId"
+    ) ses ON ses."documentId" = d.id
+    ORDER BY d."createdAt" DESC
+  `;
 
   const totalCards = docs.reduce((sum, d) => sum + d.cardCount, 0);
   const totalMastered = docs.reduce((sum, d) => sum + d.masteredCount, 0);
@@ -120,27 +125,32 @@ export default async function DocumentsPage() {
           </h1>
           {docs.length > 0 && (
             <p className="mt-2 text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{docs.length}</span>{" "}
+              <span className="font-medium text-foreground">
+                {docs.length.toLocaleString("en-US")}
+              </span>{" "}
               {docs.length === 1 ? "document" : "documents"}
               <Dot />
-              <span className="font-medium text-foreground">{totalCards}</span>{" "}
+              <span className="font-medium text-foreground">
+                {totalCards.toLocaleString("en-US")}
+              </span>{" "}
               {totalCards === 1 ? "card" : "cards"}
               <Dot />
               <span className="font-medium text-foreground">
-                {totalMastered}
+                {totalMastered.toLocaleString("en-US")}
               </span>{" "}
               mastered
             </p>
           )}
         </div>
         <Link href="/upload" className={buttonClasses()}>
-          Upload document
+          Upload a document
         </Link>
       </div>
 
       <div className="mt-8">
         {docs.length === 0 ? (
           <EmptyState
+            headingLevel={2}
             icon={<DocumentIcon className="h-6 w-6" />}
             title="No documents yet"
             description="Upload a document to generate flashcards and start studying with your AI tutor."
@@ -153,14 +163,16 @@ export default async function DocumentsPage() {
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {docs.map((doc) => (
-              <li key={doc.id} className="relative">
+              <li key={doc.id} className="relative min-w-0">
                 <Card className="flex h-full flex-col p-5">
-                  <Link
-                    href={`/documents/${doc.id}`}
-                    className="line-clamp-2 block rounded-sm pr-8 text-base font-semibold leading-snug text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                  >
-                    {doc.title}
-                  </Link>
+                  <h2>
+                    <Link
+                      href={`/documents/${doc.id}`}
+                      className="line-clamp-2 block break-words rounded-sm pr-8 pointer-coarse:pr-12 text-base font-semibold leading-snug text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    >
+                      {doc.title}
+                    </Link>
+                  </h2>
 
                   {doc.cardCount === 0 ? (
                     <>
@@ -183,7 +195,8 @@ export default async function DocumentsPage() {
                   ) : (
                     <>
                       <p className="mt-1.5 text-sm text-muted-foreground">
-                        {doc.cardCount} {doc.cardCount === 1 ? "card" : "cards"}
+                        {doc.cardCount.toLocaleString("en-US")}{" "}
+                        {doc.cardCount === 1 ? "card" : "cards"}
                         <Dot />
                         {formatLastStudied(doc.lastStudied)}
                       </p>
@@ -195,20 +208,20 @@ export default async function DocumentsPage() {
                       <div className="mt-auto flex flex-wrap gap-2 pt-5">
                         <Link
                           href={`/documents/${doc.id}/study`}
-                          className={buttonClasses({ size: "sm" })}
+                          className={buttonClasses({
+                            variant: "secondary",
+                            size: "sm",
+                          })}
                         >
                           <BookOpenIcon className="h-4 w-4" />
                           Study
                         </Link>
                         <Link
                           href={`/documents/${doc.id}/tutor`}
-                          className={buttonClasses({
-                            variant: "secondary",
-                            size: "sm",
-                          })}
+                          className={buttonClasses({ size: "sm" })}
                         >
                           <SparkleIcon className="h-4 w-4" />
-                          Tutor
+                          Tutor mode
                         </Link>
                       </div>
                     </>
