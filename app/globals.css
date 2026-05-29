@@ -30,6 +30,11 @@
   --success: #047857; /* emerald-700 */
   --success-subtle: #ecfdf5; /* emerald-50 */
 
+  /* Partial-credit grade state. Deep amber (not #b45309) so the label clears
+     AA contrast on the tint (~6.2:1 vs ~4.4:1). */
+  --partial: #92400e; /* amber-800 */
+  --partial-subtle: #f8eee6; /* warm amber tint */
+
   --destructive: #b91c1c; /* red-700 */
   --destructive-subtle: #fef2f2; /* red-50 */
   --destructive-foreground: #ffffff;
@@ -58,6 +63,9 @@
 
   --color-success: var(--success);
   --color-success-subtle: var(--success-subtle);
+
+  --color-partial: var(--partial);
+  --color-partial-subtle: var(--partial-subtle);
 
   --color-destructive: var(--destructive);
   --color-destructive-subtle: var(--destructive-subtle);

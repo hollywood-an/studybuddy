@@ -8,14 +8,16 @@ import { cn } from "@/lib/cn";
 import { Card } from "@/components/ui/Card";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
+import { ResultBox } from "@/components/ui/ResultBox";
 import { CheckIcon, SparkleIcon, SpinnerIcon } from "@/components/ui/icons";
 // Reuse the exact server action the linear study mode uses to record a
 // self-rated attempt and bump mastery.
 import { recordSelfRating } from "../study/actions";
+import type { Verdict } from "@/lib/grading";
 
 type Flashcard = { id: string; question: string; answer: string };
 type Mode = "self" | "short";
-type Result = { isCorrect: boolean; feedback?: string };
+type Result = { verdict: Verdict; feedback?: string };
 type Phase = "loading" | "card" | "ended" | "error";
 
 type AgentResponse =
@@ -26,6 +28,13 @@ type AgentResponse =
       reasoning: string;
     }
   | { sessionId: string; action: "end_session"; studyPlan: string };
+
+// How a verdict reads back to the agent in the "what's next?" prompt.
+const VERDICT_PHRASE: Record<Verdict, string> = {
+  correct: "correct",
+  partial: "partially correct",
+  incorrect: "incorrect",
+};
 
 // The end-of-session plan is model-authored markdown. There's no typography
 // plugin in this project, so map the elements we expect to design-token classes.
@@ -179,17 +188,17 @@ export default function TutorSession({
     setResult(r);
     setMastery(newMastery);
     setAnsweredCount((c) => c + 1);
-    if (r.isCorrect) setCorrectCount((c) => c + 1);
+    if (r.verdict === "correct") setCorrectCount((c) => c + 1);
   }
 
-  // Self-rate: record the attempt via the shared server action.
-  function selfRate(isCorrect: boolean) {
+  // Self-rate: record the attempt via the shared server action (two-way).
+  function selfRate(verdict: Verdict) {
     if (!card || busy) return;
     setCardError(null);
     startTransition(async () => {
       try {
-        const { newMastery } = await recordSelfRating(card.id, isCorrect);
-        applyResult({ isCorrect }, newMastery);
+        const { newMastery } = await recordSelfRating(card.id, verdict);
+        applyResult({ verdict }, newMastery);
       } catch {
         setCardError("Couldn't save your rating. Try again.");
       }
@@ -212,7 +221,7 @@ export default function TutorSession({
         throw new Error(data.error || "Grading failed");
       }
       applyResult(
-        { isCorrect: data.isCorrect, feedback: data.feedback },
+        { verdict: data.verdict, feedback: data.feedback },
         data.newMastery
       );
     } catch (err) {
@@ -227,11 +236,10 @@ export default function TutorSession({
   // so the agent sees fresh state.
   function nextCard() {
     if (!card || !result) return;
-    const verdict = result.isCorrect ? "correct" : "incorrect";
     runAgent(
-      `Student got card ${card.id} ${verdict}. Mastery is now ${mastery.toFixed(
-        2
-      )}. What's next?`
+      `Student got card ${card.id} ${
+        VERDICT_PHRASE[result.verdict]
+      }. Mastery is now ${mastery.toFixed(2)}. What's next?`
     );
   }
 
@@ -348,12 +356,12 @@ export default function TutorSession({
           <Button onClick={() => setRevealed(true)}>Show answer</Button>
         ) : (
           <div className="flex gap-3">
-            <Button onClick={() => selfRate(true)} disabled={busy}>
+            <Button onClick={() => selfRate("correct")} disabled={busy}>
               Got it
             </Button>
             <Button
               variant="secondary"
-              onClick={() => selfRate(false)}
+              onClick={() => selfRate("incorrect")}
               disabled={busy}
             >
               Missed it
@@ -381,7 +389,7 @@ export default function TutorSession({
       )}
 
       {/* Result feedback */}
-      {result && <ResultBox result={result} />}
+      {result && <ResultBox verdict={result.verdict} feedback={result.feedback} />}
 
       {/* Error */}
       {cardError && (
@@ -424,26 +432,6 @@ function ModeToggle({
     <div className="inline-flex rounded-lg border border-border bg-card p-0.5">
       {item("self", "Self-rate")}
       {item("short", "Short answer")}
-    </div>
-  );
-}
-
-function ResultBox({ result }: { result: Result }) {
-  return (
-    <div
-      className={cn(
-        "rounded-lg px-4 py-3 text-sm",
-        result.isCorrect
-          ? "bg-success-subtle text-success"
-          : "bg-destructive-subtle text-destructive"
-      )}
-    >
-      <div className="font-medium">
-        {result.isCorrect ? "Correct" : "Incorrect"}
-      </div>
-      {result.feedback && (
-        <div className="mt-1 leading-relaxed">{result.feedback}</div>
-      )}
     </div>
   );
 }

@@ -1,18 +1,19 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { applyMastery, verdictToEnum, type Verdict } from "@/lib/grading";
 
 // Records a self-rated attempt and updates mastery without calling the LLM.
-// Mirrors the bookkeeping in app/api/documents/[id]/grade/route.ts.
-export async function recordSelfRating(flashcardId: string, isCorrect: boolean) {
+// Mirrors the bookkeeping in app/api/documents/[id]/grade/route.ts. Self-rating
+// is a two-way call ("correct" / "incorrect"); "partial" only comes from the
+// AI grader.
+export async function recordSelfRating(flashcardId: string, verdict: Verdict) {
   const card = await prisma.flashcard.findUnique({ where: { id: flashcardId } });
   if (!card) {
     throw new Error("Card not found");
   }
 
-  // Update mastery: +0.2 if correct, -0.1 if wrong, clamped 0-1
-  const masteryDelta = isCorrect ? 0.2 : -0.1;
-  const newMastery = Math.min(1, Math.max(0, card.mastery + masteryDelta));
+  const newMastery = applyMastery(card.mastery, verdict);
 
   // Record the attempt and update the card in one transaction.
   // userAnswer/feedback stay null — those are only for short-answer mode.
@@ -21,7 +22,7 @@ export async function recordSelfRating(flashcardId: string, isCorrect: boolean) 
       data: {
         flashcardId: card.id,
         userAnswer: null,
-        isCorrect,
+        verdict: verdictToEnum(verdict),
         feedback: null,
       },
     }),
@@ -31,5 +32,5 @@ export async function recordSelfRating(flashcardId: string, isCorrect: boolean) 
     }),
   ]);
 
-  return { isCorrect, newMastery };
+  return { verdict, newMastery };
 }

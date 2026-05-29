@@ -6,12 +6,14 @@ import { cn } from "@/lib/cn";
 import { Card } from "@/components/ui/Card";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
+import { ResultBox } from "@/components/ui/ResultBox";
 import { CheckIcon } from "@/components/ui/icons";
 import { recordSelfRating } from "./actions";
+import type { Verdict } from "@/lib/grading";
 
 type Flashcard = { id: string; question: string; answer: string };
 type Mode = "self" | "short";
-type Result = { isCorrect: boolean; feedback?: string };
+type Result = { verdict: Verdict; feedback?: string };
 
 export default function StudySession({
   cards,
@@ -50,16 +52,16 @@ export default function StudySession({
 
   function applyResult(r: Result) {
     setResult(r);
-    if (r.isCorrect) setCorrectCount((c) => c + 1);
+    if (r.verdict === "correct") setCorrectCount((c) => c + 1);
   }
 
-  // Self-rate mode: record the attempt via the server action.
-  function selfRate(isCorrect: boolean) {
+  // Self-rate mode: record the attempt via the server action (two-way).
+  function selfRate(verdict: Verdict) {
     setError(null);
     startTransition(async () => {
       try {
-        await recordSelfRating(card.id, isCorrect);
-        applyResult({ isCorrect });
+        await recordSelfRating(card.id, verdict);
+        applyResult({ verdict });
       } catch {
         setError("Couldn't save your rating. Try again.");
       }
@@ -81,7 +83,7 @@ export default function StudySession({
       if (!response.ok) {
         throw new Error(data.error || "Grading failed");
       }
-      applyResult({ isCorrect: data.isCorrect, feedback: data.feedback });
+      applyResult({ verdict: data.verdict, feedback: data.feedback });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -166,12 +168,12 @@ export default function StudySession({
           <Button onClick={() => setRevealed(true)}>Show answer</Button>
         ) : (
           <div className="flex gap-3">
-            <Button onClick={() => selfRate(true)} disabled={busy}>
+            <Button onClick={() => selfRate("correct")} disabled={busy}>
               Got it
             </Button>
             <Button
               variant="secondary"
-              onClick={() => selfRate(false)}
+              onClick={() => selfRate("incorrect")}
               disabled={busy}
             >
               Missed it
@@ -199,7 +201,7 @@ export default function StudySession({
       )}
 
       {/* Result feedback */}
-      {result && <ResultBox result={result} />}
+      {result && <ResultBox verdict={result.verdict} feedback={result.feedback} />}
 
       {/* Error */}
       {error && (
@@ -246,26 +248,6 @@ function ModeToggle({
     <div className="inline-flex rounded-lg border border-border bg-card p-0.5">
       {item("self", "Self-rate")}
       {item("short", "Short answer")}
-    </div>
-  );
-}
-
-function ResultBox({ result }: { result: Result }) {
-  return (
-    <div
-      className={cn(
-        "rounded-lg px-4 py-3 text-sm",
-        result.isCorrect
-          ? "bg-success-subtle text-success"
-          : "bg-destructive-subtle text-destructive"
-      )}
-    >
-      <div className="font-medium">
-        {result.isCorrect ? "Correct" : "Incorrect"}
-      </div>
-      {result.feedback && (
-        <div className="mt-1 leading-relaxed">{result.feedback}</div>
-      )}
     </div>
   );
 }

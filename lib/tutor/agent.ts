@@ -24,6 +24,10 @@ Your decision process:
    c. Spaced repetition — occasionally surface a high-mastery card to
       reinforce, but only when at least one card is still below 0.8.
 
+Each past attempt has a verdict: correct, partial, or incorrect. Treat partial
+as partial credit — the student grasped the core idea but missed something, so
+it's weaker than correct but stronger than incorrect.
+
 Be concise in your reasoning. The student only sees the card you select.`;
 
 export type AgentDecision =

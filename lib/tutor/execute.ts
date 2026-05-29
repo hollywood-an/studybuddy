@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { enumToVerdict } from "@/lib/grading";
 
 type ToolResult = { type: "continue"; content: string }
   | { type: "terminal"; action: "present_card"; cardId: string; reasoning: string }
@@ -44,7 +45,7 @@ export async function executeTool(
           timesSeen: card.timesSeen,
           recentAttempts: card.attempts.map((a) => ({
             userAnswer: a.userAnswer,
-            isCorrect: a.isCorrect,
+            verdict: enumToVerdict(a.verdict),
             feedback: a.feedback,
             at: a.createdAt,
           })),

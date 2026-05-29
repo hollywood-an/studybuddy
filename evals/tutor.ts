@@ -14,11 +14,12 @@
 
 import { prisma } from "@/lib/prisma";
 import { runTutorAgent, type AgentDecision } from "@/lib/tutor/agent";
+import { verdictToEnum, type Verdict } from "@/lib/grading";
 
 // --- types --------------------------------------------------------------
 
 type SeedAttempt = {
-  isCorrect: boolean;
+  verdict: Verdict;
   userAnswer?: string | null;
   feedback?: string | null;
 };
@@ -163,10 +164,10 @@ const SCENARIOS: Scenario[] = [
         mastery: 0.4,
         timesSeen: 4,
         attempts: [
-          { isCorrect: false, userAnswer: "a + b = c", feedback: "Missing the squares." },
-          { isCorrect: false, userAnswer: "a² + b² = c", feedback: "c should be squared too." },
-          { isCorrect: true, userAnswer: "a² + b² = c²" },
-          { isCorrect: false, userAnswer: "I forget", feedback: "Review right triangles." },
+          { verdict: "incorrect", userAnswer: "a + b = c", feedback: "Missing the squares." },
+          { verdict: "incorrect", userAnswer: "a² + b² = c", feedback: "c should be squared too." },
+          { verdict: "correct", userAnswer: "a² + b² = c²" },
+          { verdict: "incorrect", userAnswer: "I forget", feedback: "Review right triangles." },
         ],
       },
       { question: "What is the quadratic formula?", answer: "x = (-b ± √(b²-4ac)) / 2a", mastery: 0.9, timesSeen: 5 },
@@ -243,7 +244,7 @@ async function seedScenario(
         timesSeen: card.timesSeen,
         attempts: card.attempts && {
           create: card.attempts.map((a) => ({
-            isCorrect: a.isCorrect,
+            verdict: verdictToEnum(a.verdict),
             userAnswer: a.userAnswer ?? null,
             feedback: a.feedback ?? null,
           })),
