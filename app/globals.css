@@ -102,3 +102,37 @@ body {
     animation: none;
   }
 }
+
+/*
+  Confirm dialog (native <dialog> in the top layer). A dim ink scrim with a
+  light blur pulls focus to the panel; the panel and scrim fade in together.
+  The blur mirrors the sticky nav's translucency, the one other place the
+  system uses backdrop-filter.
+*/
+.confirm-dialog::backdrop {
+  background-color: rgb(28 25 23 / 0.4); /* ink @ 40% */
+  backdrop-filter: blur(2px);
+}
+@keyframes confirm-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+}
+@keyframes confirm-dialog-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+.confirm-dialog[open] {
+  animation: confirm-dialog-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.confirm-dialog[open]::backdrop {
+  animation: confirm-dialog-backdrop-in 0.18s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .confirm-dialog[open],
+  .confirm-dialog[open]::backdrop {
+    animation: none;
+  }
+}
